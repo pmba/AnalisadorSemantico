@@ -14,7 +14,7 @@ Ciencia da Computacao
 typedef char* String;
 
 typedef enum cat {
-    EndOfFile, Point, Semicolon, 
+    EndOfFile, Point, Semicolon, If, Then, Else, For, To, Repeat, End, 
 } Category;
 
 typedef struct token {
@@ -26,7 +26,7 @@ typedef struct token {
 
 Token* current_token;
 
-void error(Token* token);
+void error(String msg, Token* token);
 Token* newToken(Category cat, String lex, int row, int col);
 void nextToken();
 void funPgm();
@@ -36,7 +36,7 @@ int main(int argc, char const *argv[])
 {
     current_token = newToken(Point, "if", 0, 0);
 
-    error(current_token);
+    error("'Debug' expected", current_token);
 
     free(current_token);
     return 0;
@@ -59,9 +59,9 @@ void nextToken()
     free(aux);
 }
 
-void error(Token* token)
+void error(String msg, Token* token)
 {
-    printf("Error: '%s' expected at %d, %d.\n", token->lexeme, token->row, token->col);
+    printf("Error: %s at %d, %d.\n", msg, token->row, token->col);
 }
 
 void funListSentRight()
@@ -79,9 +79,92 @@ void funListSent()
     funListSentRight();
 }
 
+void funBoolExpr()
+{
+
+}
+
+void funAritExpr()
+{
+
+}
+
+void funAtr() 
+{
+
+}
+
 void funSent()
 {
-    
+    if (current_token->category == If) {
+
+        nextToken();
+        funBoolExpr();
+
+        if (current_token->category == Then) {
+
+            nextToken();
+            funListSent();
+
+            if (current_token->category == Else) {
+
+                nextToken();
+                funListSent();
+
+                if (current_token->category == End) {
+
+                    nextToken();
+                    return;
+                } else {
+                    return error("'End' Expected", current_token);
+                }
+
+            } else if (current_token->category == End) {
+
+                nextToken();
+                return;
+            } else {
+                return error("'End' Expected", current_token);
+            }
+
+        } else {
+            return error("'Then' Expected", current_token);
+        }
+
+    } else if (current_token->category == For) {
+
+        nextToken();
+        funAtr();
+
+        if (current_token->category == To) {
+
+            nextToken();
+            funAritExpr();
+
+            if (current_token->category == Repeat) {
+
+                nextToken();
+                funListSent();
+
+                if (current_token->category == End) {
+                    
+                    nextToken();
+                    return;
+                
+                } else {
+                    return error("'End' Expected", current_token);
+                }
+            } else {
+                return error("'Repeat' Expected", current_token);
+            }
+        } else {
+            return error("'To' Expected", current_token);
+        }
+    } else {
+
+        funAtr();
+        return;
+    }
 }
 
 void funPgm()
@@ -95,9 +178,9 @@ void funPgm()
         if (current_token->category == EndOfFile) {
             return;
         } else {
-            return error(current_token);
+            return error("'EOF' Expected", current_token);
         }
     } else {
-        return error(current_token);
+        return error("'.' Expected", current_token);
     }
 }
