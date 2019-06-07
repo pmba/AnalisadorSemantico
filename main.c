@@ -90,6 +90,10 @@ void funListSent()
     funListSentRight();
 }
 
+/* 
+    Tar = 'opa' Ta Tar | E
+*/
+
 void funAritTermRight()
 {
     if (current_token->category == AritOp) {
@@ -101,11 +105,19 @@ void funAritTermRight()
     }
 }
 
+/* 
+    Ta = Fa Tar
+*/
+
 void funAritTerm()
 {
     funAritFactor();
     funAritTermRight();
 }
+
+/* 
+    Ear = 'opa' Ta Ear | E
+*/
 
 void funAritExprRight()
 {
@@ -118,10 +130,22 @@ void funAritExprRight()
     }
 }
 
+/* 
+    Ea = Ta Ear
+*/
+
 void funAritExpr()
 {
     funAritTerm();
+    funAritExprRight();
 }
+
+/* 
+    Fa = '(' Ea ')'
+       | 'Id'
+       | 'CteInt'
+       | 'CteReal'
+*/
 
 void funAritFactor()
 {
@@ -156,6 +180,13 @@ void funAritFactor()
     }
 }
 
+/* 
+    Tb = 'Not' Tb
+       | 'True'
+       | 'False'
+       | Ea
+*/
+
 void funBoolTerm()
 {
     if (current_token->category == Not) {
@@ -178,6 +209,10 @@ void funBoolTerm()
     }
 }
 
+/* 
+    Ebr = 'opa' Tb Ebr | E
+*/
+
 void funBoolExprRight()
 {
     if (current_token->category == BoolOp) {
@@ -188,11 +223,19 @@ void funBoolExprRight()
     }
 }
 
+/* 
+    Eb = Tb Ebr
+*/
+
 void funBoolExpr()
 {
     funBoolTerm();
     funBoolExprRight();
 }
+
+/* 
+    Atr = 'Id' 'Equals' Ea
+*/
 
 void funAtr() 
 {
@@ -212,6 +255,13 @@ void funAtr()
         return error("'Id' Expected", current_token);
     }
 }
+
+/* 
+    Sent = 'If' Eb 'Then' LSent 'End'
+         | 'If' Eb 'Then' LSent 'Else' Lsent 'End'
+         | 'For' Atr 'To' Ea 'Repeat' Lsent 'End'
+         | Atr
+*/
 
 void funSent()
 {
