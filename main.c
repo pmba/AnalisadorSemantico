@@ -14,7 +14,9 @@ Ciencia da Computacao
 typedef char* String;
 
 typedef enum cat {
-    EndOfFile, Point, Semicolon, If, Then, Else, For, To, Repeat, End, 
+    EndOfFile, Point, Semicolon, If, Then, Else, For, To, Repeat, End,
+    Id, Equals, BoolOp, AritOp, Not, True, False, OpenPar, ClosePar,
+    CteInt, CteReal 
 } Category;
 
 typedef struct token {
@@ -26,17 +28,18 @@ typedef struct token {
 
 Token* current_token;
 
-void error(String msg, Token* token);
 Token* newToken(Category cat, String lex, int row, int col);
-void nextToken();
+void error(String msg, Token* token);
 void funPgm();
-void funListSent();
+void funSent();
+void funAritTerm();
+void funAritFactor();
 
 int main(int argc, char const *argv[])
 {
     current_token = newToken(Point, "if", 0, 0);
 
-    error("'Debug' expected", current_token);
+    error("'Debug' Expected", current_token);
 
     free(current_token);
     return 0;
@@ -61,37 +64,153 @@ void nextToken()
 
 void error(String msg, Token* token)
 {
-    printf("Error: %s at %d, %d.\n", msg, token->row, token->col);
+    printf("%d:%d: Error: %s\n", token->row, token->col, msg);
 }
+
+/* 
+    Lsentr = ';' sent Lsentr | E
+*/
 
 void funListSentRight()
 {
     if (current_token->category == Semicolon) {
         nextToken();
-        funListSent();
+        funSent();
         funListSentRight();
     }
 }
 
+/*
+    Lsent = sent Lsentr
+*/
+
 void funListSent()
 {
-    funListSent();
+    funSent();
     funListSentRight();
 }
 
-void funBoolExpr()
+void funAritTermRight()
 {
+    if (current_token->category == AritOp) {
 
+        nextToken();
+        funAritTerm();
+        funAritTermRight();
+
+    }
+}
+
+void funAritTerm()
+{
+    funAritFactor();
+    funAritTermRight();
+}
+
+void funAritExprRight()
+{
+    if (current_token->category == AritOp) {
+
+        nextToken();
+        funAritTerm();
+        funAritExprRight();
+
+    }
 }
 
 void funAritExpr()
 {
+    funAritTerm();
+}
 
+void funAritFactor()
+{
+    if (current_token->category == OpenPar) {
+
+        nextToken();
+        funAritExpr();
+
+        if (current_token->category == ClosePar) {
+
+            nextToken();
+            return;
+
+        } else {
+            return error("')' Expected", current_token);
+        }
+    } else if (current_token->category == Id) {
+
+        nextToken();
+        return;
+
+    } else if (current_token->category == CteInt) {
+        
+        nextToken();
+        return;
+
+    } else if (current_token->category == CteReal) {
+        
+        nextToken();
+        return;
+
+    }
+}
+
+void funBoolTerm()
+{
+    if (current_token->category == Not) {
+
+        nextToken();
+        funBoolTerm();
+
+    } else if (current_token->category == True) {
+        
+        nextToken();
+        return;
+
+    } else if (current_token->category == False) {
+
+        nextToken();
+        return;
+
+    } else {
+        funAritExpr();
+    }
+}
+
+void funBoolExprRight()
+{
+    if (current_token->category == BoolOp) {
+        
+        nextToken();
+        funBoolTerm();
+        funBoolExprRight();
+    }
+}
+
+void funBoolExpr()
+{
+    funBoolTerm();
+    funBoolExprRight();
 }
 
 void funAtr() 
 {
+    if (current_token->category == Id) {
+        
+        nextToken();
 
+        if (current_token->category == Equals) {
+
+            nextToken();
+            funAritExpr();
+
+        } else {
+            return error("'=' Expected", current_token);
+        }
+    } else {
+        return error("'Id' Expected", current_token);
+    }
 }
 
 void funSent()
@@ -166,6 +285,10 @@ void funSent()
         return;
     }
 }
+
+/* 
+    Pgm = Lsent'.'
+*/
 
 void funPgm()
 {
