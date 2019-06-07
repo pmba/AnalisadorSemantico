@@ -9,7 +9,7 @@ Ciencia da Computacao
 
 *****************************/
 
-#define DEBUG if(0)
+#define DEBUG if(1)
 
 typedef char* String;
 
@@ -34,14 +34,27 @@ void funPgm();
 void funSent();
 void funAritTerm();
 void funAritFactor();
+void nextToken();
 
 int main(int argc, char const *argv[])
 {
-    current_token = newToken(Point, "if", 0, 0);
+    DEBUG {
+        current_token = newToken(If, "if", 1, 1);
+        current_token->next = newToken(True, "true", 1, 3);
+        current_token->next->next = newToken(Then, "then", 1, 7);
+        current_token->next->next->next = newToken(Id, "a", 1, 11);
+        current_token->next->next->next->next = newToken(Equals, "=", 1, 12);
+        current_token->next->next->next->next->next = newToken(CteInt, "100", 1, 13);
+        current_token->next->next->next->next->next->next = newToken(End, "end", 1, 16);
+        current_token->next->next->next->next->next->next->next = newToken(Point, ".", 1, 19);
+        current_token->next->next->next->next->next->next->next->next = newToken(EndOfFile, "EOF", 1, 20);
 
-    error("'Debug' Expected", current_token);
+        printf("Analyzing...\n");
+        funPgm();
 
-    free(current_token);
+        while (current_token != NULL) nextToken();
+    }
+
     return 0;
 }
 
@@ -59,6 +72,9 @@ void nextToken()
 {
     Token* aux = current_token;
     current_token = current_token->next;
+    
+    DEBUG printf("%s ", aux->lexeme);
+    
     free(aux);
 }
 
@@ -349,6 +365,7 @@ void funPgm()
         nextToken();
 
         if (current_token->category == EndOfFile) {
+            DEBUG printf("\nAccepted!\n");
             return;
         } else {
             return error("'EOF' Expected", current_token);
